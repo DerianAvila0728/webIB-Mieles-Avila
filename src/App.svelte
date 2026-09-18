@@ -91,33 +91,6 @@
           <td>ayer</td>
           <td><a href="#ver-1035">Ver</a></td>
         </tr>
-        <tr>
-          <th scope="row">1031</th>
-          <td>Solicitud de un usuario adicional</td>
-          <td>Clínica San Rafael</td>
-          <td>Abierto</td>
-          <td>Baja</td>
-          <td>ayer</td>
-          <td><a href="#ver-1031">Ver</a></td>
-        </tr>
-        <tr>
-          <th scope="row">1027</th>
-          <td>Lentitud al cargar el inventario</td>
-          <td>Comercial Vélez</td>
-          <td>En progreso</td>
-          <td>Alta</td>
-          <td>hace 3 días</td>
-          <td><a href="#ver-1027">Ver</a></td>
-        </tr>
-        <tr>
-          <th scope="row">1019</th>
-          <td>Cambio de RUC en la cuenta</td>
-          <td>Panadería Doña Luz</td>
-          <td>Resuelto</td>
-          <td>Baja</td>
-          <td>hace 5 días</td>
-          <td><a href="#ver-1019">Ver</a></td>
-        </tr>
       </tbody>
     </table>
   </section>
