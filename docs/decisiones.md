@@ -1,9 +1,11 @@
-## El listado principal usa table con scope para accesibilidad
-**Elegido:** Una etiqueta `<table>` con `<caption>`, `<thead>`, `<tbody>` y atributos `scope="col"` en los encabezados de columna.
-**Descartado:** Una lista desordenada (`<ul>`) o un bloque de contenedores genéricos (`div`) con estilos visuales de tabla.
-**Consecuencia que evita:** Permite que las tecnologías de asistencia y lectores de pantalla anuncien de qué columna proviene cada celda de datos al navegar (por ejemplo, anunciando "Estado, En progreso" en lugar de leer únicamente el texto suelto).
+Decisión 1: La tabla en pantalla estrecha
 
-## El pie de página utiliza footer y time
-**Elegido:** Una etiqueta semántica `<footer>` para el cierre de la página y una etiqueta `<time datetime="2026-09-18T15:20">` para la sincronización.
-**Descartado:** Un contenedor genérico `<div class="footer">` con texto plano.
-**Consecuencia que evita:** El uso de `footer` anuncia la región de pie de página permitiendo a los usuarios saltar directamente a ella mediante atajos de teclado o lectores de pantalla; además, el elemento `time` preserva una fecha legible por máquinas.
+Elegimos la mecánica 1: la tabla se desplaza dentro de su propio espacio utilizando un contenedor con desbordamiento horizontal (overflow-x: auto).
+Para el rol de entrenador de gimnasio, porque en un teléfono móvil necesita consultar todas las columnas de métricas e indicadores de los atletas sin perder información clave.
+Lo que se pierde es la vista simultánea de toda la tabla completa en pantallas pequeñas, obligando a realizar desplazamiento horizontal.
+
+Decisión 2: Los filtros y la estructura semántica
+
+Elegimos organizar los filtros de búsqueda en una fila horizontal clara con elementos semánticos de formulario y etiquetas asociadas.
+La consecuencia es que el entrenador puede ubicar y filtrar rápidamente los planes de sus atletas por estado o nivel con una interfaz limpia y accesible.
+Lo que se pierde es el espacio vertical compacto, priorizando la claridad visual y la usabilidad frente a pantallas saturadas.

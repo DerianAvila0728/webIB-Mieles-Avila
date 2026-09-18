@@ -1,228 +1,287 @@
+<!-- STREAMING_CHUNK:Definición del componente principal Svelte -->
 <script>
-    let filtroEstado = 'todos';
-    let filtroNivel = 'todos';
-    let busqueda = '';
-
-    // Datos simulados de rutinas y planes de bienestar
-    let rutinas = [
-        { id: 301, titulo: 'Rutina de hipertrofia y dieta alta en proteína', cliente: 'Mateo Vera', iniciales: 'MV', estado: 'en progreso', nivel: 'intermedio', actualizacion: 'hace 30 min' },
-        { id: 302, titulo: 'Plan de cardio y déficit calórico', cliente: 'Lucía Pérez', iniciales: 'LP', estado: 'pendiente', nivel: 'principiante', actualizacion: 'hace 2 h' },
-        { id: 303, titulo: 'Entrenamiento de fuerza y nutrición limpia', cliente: 'Juan Morales', iniciales: 'JM', estado: 'completado', nivel: 'avanzado', actualizacion: 'ayer' }
-    ];
-
-    // Filtrado reactivo en Svelte
-    $: rutinasFiltradas = rutinas.filter(r => {
-        const matchEstado = filtroEstado === 'todos' || r.estado === filtroEstado;
-        const matchNivel = filtroNivel === 'todos' || r.nivel === filtroNivel;
-        const matchBusqueda = r.titulo.toLowerCase().includes(busqueda.toLowerCase()) || r.cliente.toLowerCase().includes(busqueda.toLowerCase());
-        return matchEstado && matchNivel && matchBusqueda;
-    });
-
-    function resetearFiltros() {
-        filtroEstado = 'todos';
-        filtroNivel = 'todos';
-        busqueda = '';
-    }
+    // Lógica limpia y sencilla para la plataforma de gimnasio
 </script>
 
-<!-- STREAMING_CHUNK:Estructura semántica de la cabecera -->
-<header class="sticky top-0 z-50 backdrop-blur-xl bg-[#090d16]/80 border-b border-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-900/40">
-                <span class="text-white font-black text-xl">⚡</span>
-            </div>
-            <div>
-                <span class="text-xl font-extrabold tracking-wider bg-gradient-to-r from-white via-gray-200 to-emerald-400 bg-clip-text text-transparent">GYM & WELLNESS</span>
-                <span class="block text-xs text-emerald-400 font-semibold uppercase tracking-widest">PRO TRAINER HUB</span>
-            </div>
-        </div>
-        
-        <nav class="hidden md:flex items-center space-x-8 text-sm font-medium" aria-label="Navegación principal">
-            <a href="#dashboard" class="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-2">Dashboard</a>
-            <a href="#ejercicios" class="text-gray-400 hover:text-emerald-300 transition-colors flex items-center gap-2">Ejercicios</a>
-            <a href="#clientes" class="text-gray-400 hover:text-emerald-300 transition-colors flex items-center gap-2">Atletas</a>
-            <a href="#nutricion" class="text-gray-400 hover:text-emerald-300 transition-colors flex items-center gap-2">Nutrición</a>
-        </nav>
-
-        <div class="flex items-center space-x-4">
-            <button class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2">
-                + Nueva Rutina
-            </button>
-        </div>
-    </div>
+<header>
+    <h1>🏋️ GYM & WELLNESS PRO</h1>
+    <nav aria-label="Navegación principal">
+        <a href="#ejercicios">Ejercicios</a>
+        <a href="#comidas">Comidas</a>
+        <a href="#nuevo">+ Nueva rutina</a>
+    </nav>
 </header>
 
-<!-- STREAMING_CHUNK:Contenido principal de la aplicación -->
-<main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-    
-    <!-- Banner de Bienvenida y Estadísticas Rápidas -->
-    <section aria-labelledby="titulo-vista" class="space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-gray-900 via-gray-900 to-[#0c1816] p-8 rounded-3xl border border-gray-800 shadow-2xl relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="relative z-10 space-y-2">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sistema Activo en Vivo
-                </div>
-                <h1 id="titulo-vista" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Panel de Control & Atletas</h1>
-                <p class="text-gray-400 text-sm sm:text-base">Entrenador a cargo: <span class="text-white font-semibold">Carlos Mendoza</span> | Rendimiento óptimo</p>
+<main class="container">
+    <section aria-labelledby="titulo-vista">
+        <h2 id="titulo-vista">Planes y rutinas asignadas</h2>
+        <p class="subtitle">Entrenador: Carlos Mendoza - 3 usuarios activos</p>
+    </section>
+
+    <!-- Filtros ordenados estrictamente en horizontal -->
+    <section aria-labelledby="titulo-filtros" class="filter-card">
+        <h3 id="titulo-filtros">Filtros de Búsqueda</h3>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="filtro-estado">Estado:</label>
+                <select id="filtro-estado">
+                    <option>Todos</option>
+                    <option>Pendiente</option>
+                    <option>En progreso</option>
+                    <option>Completado</option>
+                </select>
             </div>
-            <div class="grid grid-cols-3 gap-4 relative z-10">
-                <div class="bg-gray-800/60 backdrop-blur border border-gray-700/60 p-4 rounded-2xl text-center">
-                    <span class="block text-2xl sm:text-3xl font-extrabold text-emerald-400">12</span>
-                    <span class="text-xs text-gray-400 font-medium uppercase tracking-wider">Activos</span>
-                </div>
-                <div class="bg-gray-800/60 backdrop-blur border border-gray-700/60 p-4 rounded-2xl text-center">
-                    <span class="block text-2xl sm:text-3xl font-extrabold text-amber-400">3</span>
-                    <span class="text-xs text-gray-400 font-medium uppercase tracking-wider">Pendientes</span>
-                </div>
-                <div class="bg-gray-800/60 backdrop-blur border border-gray-700/60 p-4 rounded-2xl text-center">
-                    <span class="block text-2xl sm:text-3xl font-extrabold text-teal-400">95%</span>
-                    <span class="text-xs text-gray-400 font-medium uppercase tracking-wider">Éxito</span>
-                </div>
+            <div class="filter-group">
+                <label for="filtro-nivel">Nivel:</label>
+                <select id="filtro-nivel">
+                    <option>Todos</option>
+                    <option>Principiante</option>
+                    <option>Intermedio</option>
+                    <option>Avanzado</option>
+                </select>
             </div>
+            <div class="filter-group search">
+                <label for="filtro-buscar">Buscar:</label>
+                <input id="filtro-buscar" type="text" placeholder="Asunto o cliente..." />
+            </div>
+            <button type="button" class="btn-filter">Aplicar filtros</button>
         </div>
     </section>
 
-    <!-- Barra de Filtros Interactiva -->
-    <section aria-labelledby="titulo-filtros" class="bg-gray-900/80 backdrop-blur border border-gray-800 p-6 rounded-3xl shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 id="titulo-filtros" class="text-lg font-bold text-white flex items-center gap-2">
-                Filtros Avanzados de Entrenamiento
-            </h2>
-            <button on:click={resetearFiltros} class="text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">Limpiar filtros</button>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-                <label for="filtro-estado" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Estado de Rutina</label>
-                <select id="filtro-estado" bind:value={filtroEstado} class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer">
-                    <option value="todos">Todos los estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en progreso">En progreso</option>
-                    <option value="completado">Completado</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="filtro-nivel" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Nivel de Exigencia</label>
-                <select id="filtro-nivel" bind:value={filtroNivel} class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer">
-                    <option value="todos">Todos los niveles</option>
-                    <option value="principiante">Principiante</option>
-                    <option value="intermedio">Intermedio</option>
-                    <option value="avanzado">Avanzado</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="filtro-buscar" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Búsqueda Rápida</label>
-                <input id="filtro-buscar" type="text" bind:value={busqueda} placeholder="Buscar por cliente o rutina..." class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-gray-600">
-            </div>
-        </div>
+    <section aria-labelledby="titulo-resumen" class="summary-card">
+        <h3 id="titulo-resumen">Resumen</h3>
+        <p class="badges">
+            <span class="badge pending">Pendientes: 1</span>
+            <span class="badge progress">En progreso: 1</span>
+            <span class="badge success">Completados: 1</span>
+        </p>
     </section>
 
-    <!-- Listado con Tabla Semántica Profesional -->
-    <section aria-labelledby="titulo-listado" class="bg-gray-900/80 backdrop-blur border border-gray-800 rounded-3xl shadow-2xl overflow-hidden">
-        <div class="p-6 border-b border-gray-800 flex items-center justify-between flex-wrap gap-4">
-            <div>
-                <h2 id="titulo-listado" class="text-xl font-bold text-white flex items-center gap-2">
-                    Listado de Rutinas & Nutrición
-                </h2>
-                <p class="text-xs text-gray-400 mt-1">Control diario de entrenamientos y dietas personalizadas</p>
-            </div>
-            <div class="text-xs text-gray-400 bg-gray-950 px-3 py-1.5 rounded-xl border border-gray-800 font-medium">
-                Mostrando <span class="text-emerald-400 font-bold">{rutinasFiltradas.length}</span> registros
-            </div>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <caption>Listado detallado de planes de gimnasio asignados a clientes</caption>
-                <thead>
-                    <tr class="bg-gray-950/60 text-gray-400 uppercase text-xs tracking-wider border-b border-gray-800">
-                        <th scope="col" class="py-4 px-6 font-semibold">N° ID</th>
-                        <th scope="col" class="py-4 px-6 font-semibold">Rutina / Plan Nutricional</th>
-                        <th scope="col" class="py-4 px-6 font-semibold">Cliente</th>
-                        <th scope="col" class="py-4 px-6 font-semibold">Estado</th>
-                        <th scope="col" class="py-4 px-6 font-semibold">Nivel</th>
-                        <th scope="col" class="py-4 px-6 font-semibold">Última Actualización</th>
-                        <th scope="col" class="py-4 px-6 font-semibold text-right">Acción</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-800/60 text-sm">
-                    {#each rutinasFiltradas as rutina}
-                        <tr class="hover:bg-gray-800/40 transition-colors group">
-                            <td class="py-4 px-6 font-mono font-bold text-emerald-400">#{rutina.id}</td>
-                            <td class="py-4 px-6">
-                                <div class="font-semibold text-white group-hover:text-emerald-400 transition-colors">{rutina.titulo}</div>
-                                <div class="text-xs text-gray-500">Enfoque: Rendimiento & Nutrición</div>
-                            </td>
-                            <td class="py-4 px-6">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">{rutina.iniciales}</div>
-                                    <span class="font-medium text-gray-300">{rutina.cliente}</span>
-                                </div>
-                            </td>
-                            <td class="py-4 px-6">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold 
-                                    {rutina.estado === 'completado' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                                      rutina.estado === 'en progreso' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 
-                                      'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
-                                    <span class="w-1.5 h-1.5 rounded-full {rutina.estado === 'completado' ? 'bg-emerald-400' : rutina.estado === 'en progreso' ? 'bg-sky-400' : 'bg-amber-400'}"></span> 
-                                    {rutina.estado}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6">
-                                <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-700">{rutina.nivel}</span>
-                            </td>
-                            <td class="py-4 px-6 text-gray-400 text-xs font-mono">{rutina.actualizacion}</td>
-                            <td class="py-4 px-6 text-right">
-                                <button class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-emerald-600 hover:text-white text-gray-300 font-semibold text-xs transition-all border border-gray-700 shadow-sm ml-auto flex items-center gap-1.5">
-                                    Ver Detalle
-                                </button>
-                            </td>
-                        </tr>
-                    {:else}
-                        <tr>
-                            <td colspan="7" class="py-8 text-center text-gray-500 text-sm">No se encontraron rutinas que coincidan con los filtros.</td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
-        </div>
+    <section aria-labelledby="titulo-listado" class="table-card">
+        <h3 id="titulo-listado">Listado de planes</h3>
+        <table>
+            <caption>Listado de rutinas de ejercicios y nutrición asignadas</caption>
+            <thead>
+                <tr>
+                    <th scope="col">N° ID</th>
+                    <th scope="col">Rutina / Plan</th>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Nivel</th>
+                    <th scope="col">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">301</th>
+                    <td>Rutina de hipertrofia y dieta alta en proteína</td>
+                    <td>Mateo Vera</td>
+                    <td>En progreso</td>
+                    <td>Intermedio</td>
+                    <td><a href="#ver-301">Ver detalle</a></td>
+                </tr>
+                <tr>
+                    <th scope="row">302</th>
+                    <td>Plan de cardio y déficit calórico</td>
+                    <td>Lucía Pérez</td>
+                    <td>Pendiente</td>
+                    <td>Principiante</td>
+                    <td><a href="#ver-302">Ver detalle</a></td>
+                </tr>
+                <tr>
+                    <th scope="row">303</th>
+                    <td>Entrenamiento de fuerza y nutrición limpia</td>
+                    <td>Juan Morales</td>
+                    <td>Completado</td>
+                    <td>Avanzado</td>
+                    <td><a href="#ver-303">Ver detalle</a></td>
+                </tr>
+            </tbody>
+        </table>
     </section>
 </main>
 
-<!-- STREAMING_CHUNK:Pie de página semántico -->
-<footer class="mt-auto border-t border-gray-800 bg-gray-950 py-6 text-center text-xs text-gray-500">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p>Gym & Wellness Pro - Proyecto Docente 2026-2 | Desarrollado con Estándares Semánticos</p>
-        <p>Última sincronización del sistema: <time datetime="2026-09-18T15:20">hoy, 15:20</time></p>
-    </div>
+<footer>
+    <p>Bienestar Humano y Gym Pro - Última sincronización: <time datetime="2026-09-18T15:20">hoy, 15:20</time></p>
 </footer>
 
-<!-- STREAMING_CHUNK:Estilos CSS integrados y personalizados -->
 <style>
-    /* Estilos base para la plataforma de fitness */
+    /* Estilos limpios y organizados para Svelte */
     :global(body) {
-        background-color: #090d16;
-        color: #f3f4f6;
-        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6f8;
+        color: #333;
     }
 
-    /* Scrollbar elegante */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+    header {
+        background-color: #111827;
+        color: #fff;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #22c55e;
     }
-    ::-webkit-scrollbar-track {
-        background: #090d16;
+
+    header h1 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #4ade80;
     }
-    ::-webkit-scrollbar-thumb {
-        background: #1f2937;
-        border-radius: 4px;
+
+    nav a {
+        color: #fff;
+        text-decoration: none;
+        margin-left: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
     }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #22c55e;
+
+    nav a:hover {
+        color: #4ade80;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+
+    section {
+        background: #fff;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    h2, h3 {
+        margin-top: 0;
+        color: #111827;
+    }
+
+    .subtitle {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-bottom: 0;
+    }
+
+    /* Filtros ordenados estrictamente en horizontal */
+    .filter-row {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-group.search {
+        flex: 2;
+    }
+
+    label {
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: #374151;
+    }
+
+    select, input {
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        background-color: #f9fafb;
+    }
+
+    .btn-filter {
+        background-color: #0ea5e9;
+        color: white;
+        border: none;
+        padding: 9px 16px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        height: 38px;
+    }
+
+    .btn-filter:hover {
+        background-color: #0284c7;
+    }
+
+    /* Badges de resumen */
+    .badges {
+        display: flex;
+        gap: 10px;
+        margin: 0;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+
+    .badge.pending { background-color: #fef3c7; color: #b45309; }
+    .badge.progress { background-color: #e0f2fe; color: #0369a1; }
+    .badge.success { background-color: #dcfce7; color: #15803d; }
+
+    /* Estilos de tabla */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    caption {
+        display: none;
+    }
+
+    th, td {
+        border: 1px solid #e5e7eb;
+        padding: 12px;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+
+    th {
+        background-color: #f9fafb;
+        color: #1f2937;
+    }
+
+    tr:hover {
+        background-color: #f8fafc;
+    }
+
+    td a {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    td a:hover {
+        text-decoration: underline;
+    }
+
+    footer {
+        text-align: center;
+        padding: 20px;
+        color: #6b7280;
+        font-size: 0.85rem;
+        background-color: #fff;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 30px;
     }
 </style>
+```eof

@@ -1,26 +1,33 @@
-# Nuestro negocio
+Nuestro negocio
 
-Negocio: Plataforma digital de gestión de entrenamiento físico, rutinas de hipertrofia/cardio y planes de nutrición personalizados para atletas.
+Negocio: Plataforma digital para entrenadores que gestionan rutinas de ejercicios, hipertrofia y planes de nutrición personalizados.
 
 
-## Las dos entidades
-1. Rutinas / Planes (planes de ejercicios y dietas asignados).
-2. Clientes / Atletas (usuarios que reciben y ejecutan dichos planes).
-Que se relaciona con la primera porque cada cliente tiene asignada una rutina o plan nutricional específico según su nivel y objetivo.
+Las dos entidades
 
-## La entidad que cambia de estado
+Rutinas / Planes (planes de entrenamiento y dieta asignados).
+
+Clientes / Atletas (usuarios que reciben y ejecutan los planes).
+Que se relaciona con la primera porque cada cliente tiene asignado un plan específico de gimnasio según su nivel.
+
+La entidad que cambia de estado
+
 Entidad: Rutina / Plan
-Estados: 
+Estados:
 Pendiente -> En progreso -> Completado
-Quien provoca cada cambio: El entrenador actualiza el estado según el avance del atleta, o el sistema lo marca al finalizar el ciclo.
+Quien provoca cada cambio: El entrenador actualiza el estado según el avance del atleta en el gimnasio.
 
-## Los dos roles
-- Entrenador: Puede crear rutinas, asignar dietas, modificar estados y supervisar atletas; no puede eliminar cuentas maestras del sistema.
-- Cliente / Atleta: Puede visualizar su plan asignado, ver su progreso y marcar sesiones como realizadas; no puede modificar rutinas de otros usuarios.
+Los dos roles
 
-## La pantalla de hoy
+Entrenador: Puede crear rutinas, asignar dietas, modificar estados y supervisar atletas; no puede eliminar cuentas maestras.
+
+Cliente / Atleta: Puede visualizar su plan asignado, ver su progreso y marcar sesiones; no puede modificar rutinas de otros.
+
+La pantalla de hoy
+
 El rol que la usa: Entrenador de gimnasio.
-La pregunta que responde: ¿Qué planes y rutinas tengo asignados hoy y en qué estado se encuentran?
+La pregunta que responde: ¿Qué planes y rutinas tengo asignados y en qué estado se encuentran?
 
-## Pendientes
-- Semana 3: Definir notificaciones automáticas para los clientes cuando el plan cambie de estado.
+Pendientes
+
+Semana 3: Definir notificaciones automáticas para los clientes cuando el plan cambie de estado.
