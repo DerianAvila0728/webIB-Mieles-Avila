@@ -3,7 +3,9 @@
   
   <form action="#" method="post">
     <label for="rutina">Rutina / Plan</label>
-    <input type="text" id="rutina" name="rutina" required>
+    <input type="text" id="rutina" name="rutina" required
+           aria-invalid="true" aria-describedby="rutina-error">
+    <p id="rutina-error" class="mensaje-error">Error: Este campo es obligatorio y no puede quedar vacío.</p>
 
     <label for="cliente">Cliente</label>
     <input type="text" id="cliente" name="cliente" required>

@@ -293,4 +293,7 @@ code {
     right: 0;
     border-right-color: var(--border);
   }
+  .mensaje-error {
+  color: #b3261e;
+}
 }
