@@ -1,29 +1,74 @@
-<section aria-labelledby="titulo-nuevo">
-  <h2 id="titulo-nuevo">Nuevo plan o rutina</h2>
-  
-  <form action="#" method="post">
-    <label for="rutina">Rutina / Plan</label>
-    <input type="text" id="rutina" name="rutina" required
-           aria-invalid="true" aria-describedby="rutina-error">
-    <p id="rutina-error" class="mensaje-error">Error: Este campo es obligatorio y no puede quedar vacío.</p>
+<section class="form-card" aria-labelledby="titulo-nuevo">
+    <h2 id="titulo-nuevo">Nuevo plan o rutina</h2>
 
-    <label for="cliente">Cliente</label>
-    <input type="text" id="cliente" name="cliente" required>
+    <form action="#" method="post" class="main-form">
 
-    <label for="estado">Estado</label>
-    <select id="estado" name="estado">
-      <option>Pendiente</option>
-      <option>En progreso</option>
-      <option>Completado</option>
-    </select>
+        <div class="form-group">
+            <label for="rutina">
+                Rutina / Plan
+                <span aria-hidden="true">*</span>
+            </label>
 
-    <label for="nivel">Nivel</label>
-    <select id="nivel" name="nivel">
-      <option>Principiante</option>
-      <option>Intermedio</option>
-      <option>Avanzado</option>
-    </select>
+            <input
+                type="text"
+                id="rutina"
+                name="rutina"
+                required
+                autocomplete="off"
+                aria-describedby="rutina-ayuda"
+            />
 
-    <button type="submit">Registrar plan</button>
-  </form>
+            <p id="rutina-ayuda" class="field-help">
+                Campo obligatorio.
+            </p>
+        </div>
+
+
+        <div class="form-group">
+            <label for="cliente">
+                Cliente
+                <span aria-hidden="true">*</span>
+            </label>
+
+            <input
+                type="text"
+                id="cliente"
+                name="cliente"
+                required
+                autocomplete="name"
+            />
+        </div>
+
+
+        <div class="form-group">
+            <label for="estado">
+                Estado
+            </label>
+
+            <select id="estado" name="estado">
+                <option value="pendiente">Pendiente</option>
+                <option value="progreso">En progreso</option>
+                <option value="completado">Completado</option>
+            </select>
+        </div>
+
+
+        <div class="form-group">
+            <label for="nivel">
+                Nivel
+            </label>
+
+            <select id="nivel" name="nivel">
+                <option value="principiante">Principiante</option>
+                <option value="intermedio">Intermedio</option>
+                <option value="avanzado">Avanzado</option>
+            </select>
+        </div>
+
+
+        <button type="submit" class="btn-submit">
+            Registrar plan
+        </button>
+
+    </form>
 </section>
