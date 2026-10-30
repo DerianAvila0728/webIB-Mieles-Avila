@@ -16,6 +16,10 @@
       errorRed = 'Sin red o error al cargar datos';
     } else {
       suscripciones = data as Suscripcion[];
+      // Seleccionar automáticamente la primera suscripción si existe
+      if (suscripciones.length > 0) {
+        verDetalle(suscripciones[0]);
+      }
     }
   });
 
@@ -56,7 +60,7 @@
           <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
           <li on:click={() => verDetalle(s)} style="cursor: pointer; margin-bottom: 10px; border: 1px solid #ccc; padding: 10px;">
             <strong>Suscripción #{s.id}</strong> <br>
-            Estado: {s.estado} <!-- El estado leído en texto -->
+            Estado: {s.estado}
           </li>
         {:else}
           <p>Cargando suscripciones o sin registros...</p>
