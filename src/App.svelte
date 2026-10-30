@@ -1,327 +1,107 @@
-```svelte
 <script lang="ts">
-    import Formulario from './Formulario.svelte';
+  import { onMount } from 'svelte';
+  import { supabase } from './lib/supabase';
+  import type { Suscripcion, Pago, Asistencia } from './tipos';
+
+  let suscripciones: Suscripcion[] = [];
+  let suscripcionSeleccionada: Suscripcion | null = null;
+  let pagos: Pago[] = [];
+  let asistencias: Asistencia[] = [];
+  let errorRed = '';
+
+  // Cargar el listado al iniciar la vista desde Supabase
+  onMount(async () => {
+    const { data, error } = await supabase.from('suscripciones').select('*');
+    if (error) {
+      errorRed = 'Sin red o error al cargar datos';
+    } else {
+      suscripciones = data as Suscripcion[];
+    }
+  });
+
+  // Cargar los datos relacionados para el detalle
+  async function verDetalle(suscripcion: Suscripcion) {
+    suscripcionSeleccionada = suscripcion;
+    
+    // Peticiones a las tablas relacionadas
+    const { data: dataPagos } = await supabase
+      .from('pagos')
+      .select('*')
+      .eq('suscripcion_id', suscripcion.id);
+      
+    const { data: dataAsistencias } = await supabase
+      .from('asistencias')
+      .select('*')
+      .eq('suscripcion_id', suscripcion.id);
+
+    pagos = (dataPagos as Pago[]) || [];
+    asistencias = (dataAsistencias as Asistencia[]) || [];
+  }
 </script>
 
-<a class="skip-link" href="#contenido-principal">
-    Saltar al contenido principal
-</a>
+<main>
+  <h1>GYM & WELLNESS PRO</h1>
 
-<header class="site-header">
-    <div class="header-inner">
-        <h1>GYM &amp; WELLNESS PRO</h1>
+  {#if errorRed}
+    <p style="color: red; font-weight: bold;">{errorRed}</p>
+  {/if}
 
-        <nav aria-label="Navegación principal">
-            <ul class="nav-list">
-                <li>
-                    <a href="#ejercicios">Ejercicios</a>
-                </li>
-
-                <li>
-                    <a href="#resumen">Comidas</a>
-                </li>
-
-                <li>
-                    <a href="#nuevo">Nueva rutina</a>
-                </li>
-            </ul>
-        </nav>
-    </div>
-</header>
-
-<main id="contenido-principal" class="container">
-
-    <section
-        aria-labelledby="titulo-vista"
-        class="intro"
-    >
-        <h2 id="titulo-vista">
-            Planes y rutinas asignadas
-        </h2>
-
-        <p class="subtitle">
-            Entrenador: Carlos Mendoza - 3 usuarios activos
-        </p>
+  <div class="contenedor">
+    <!-- VISTA LISTADO -->
+    <section class="listado">
+      <h2>Listado de Suscripciones</h2>
+      <ul>
+        {#each suscripciones as s}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+          <li on:click={() => verDetalle(s)} style="cursor: pointer; margin-bottom: 10px; border: 1px solid #ccc; padding: 10px;">
+            <strong>Suscripción #{s.id}</strong> <br>
+            Estado: {s.estado} <!-- El estado leído en texto -->
+          </li>
+        {:else}
+          <p>Cargando suscripciones o sin registros...</p>
+        {/each}
+      </ul>
     </section>
 
+    <!-- VISTA DETALLE -->
+    <section class="detalle">
+      {#if suscripcionSeleccionada}
+        <h2>Detalle Suscripción #{suscripcionSeleccionada.id}</h2>
+        <p><strong>Estado:</strong> {suscripcionSeleccionada.estado}</p>
+        <p><strong>Vence el:</strong> {suscripcionSeleccionada.fin}</p>
 
-    <section
-        aria-labelledby="titulo-filtros"
-        class="filter-card"
-    >
-        <h2 id="titulo-filtros">
-            Filtros de búsqueda
-        </h2>
-
-        <form
-            class="filter-row"
-            aria-label="Filtros de planes"
-        >
-
-            <div class="filter-group">
-                <label for="filtro-estado">
-                    Estado
-                </label>
-
-                <select
-                    id="filtro-estado"
-                    name="estado"
-                >
-                    <option value="todos">Todos</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="progreso">En progreso</option>
-                    <option value="completado">Completado</option>
-                </select>
-            </div>
-
-
-            <div class="filter-group">
-                <label for="filtro-nivel">
-                    Nivel
-                </label>
-
-                <select
-                    id="filtro-nivel"
-                    name="nivel"
-                >
-                    <option value="todos">Todos</option>
-                    <option value="principiante">Principiante</option>
-                    <option value="intermedio">Intermedio</option>
-                    <option value="avanzado">Avanzado</option>
-                </select>
-            </div>
-
-
-            <div class="filter-group search">
-                <label for="filtro-buscar">
-                    Buscar por asunto o cliente
-                </label>
-
-                <input
-                    id="filtro-buscar"
-                    name="buscar"
-                    type="search"
-                    placeholder="Asunto o cliente..."
-                    autocomplete="off"
-                />
-            </div>
-
-
-            <button
-                type="submit"
-                class="btn-filter"
-            >
-                Aplicar filtros
-            </button>
-
-        </form>
-    </section>
-
-
-    <section
-        id="resumen"
-        aria-labelledby="titulo-resumen"
-        class="summary-card"
-    >
-        <h2 id="titulo-resumen">
-            Resumen
-        </h2>
-
-        <ul
-            class="badges"
-            aria-label="Resumen de planes por estado"
-        >
-            <li class="badge pending">
-                <span aria-hidden="true">1</span>
-                <span>Pendiente: 1 plan</span>
-            </li>
-
-            <li class="badge progress">
-                <span aria-hidden="true">1</span>
-                <span>En progreso: 1 plan</span>
-            </li>
-
-            <li class="badge success">
-                <span aria-hidden="true">1</span>
-                <span>Completado: 1 plan</span>
-            </li>
+        <h3>Pagos Relacionados</h3>
+        <ul>
+          {#each pagos as p}
+            <li>Monto: ${p.monto}</li>
+          {:else}
+            <li>No hay pagos registrados.</li>
+          {/each}
         </ul>
+
+        <h3>Asistencias</h3>
+        <ul>
+          {#each asistencias as a}
+            <li>Ingreso: {a.ingreso} - Nota: {a.nota}</li>
+          {:else}
+            <li>No hay asistencias registradas.</li>
+          {/each}
+        </ul>
+      {:else}
+        <p>Haz clic en una suscripción para ver su detalle.</p>
+      {/if}
     </section>
-
-
-    <section
-        id="ejercicios"
-        aria-labelledby="titulo-listado"
-        class="table-card"
-    >
-        <h2 id="titulo-listado">
-            Listado de planes
-        </h2>
-
-        <p id="descripcion-tabla" class="sr-only">
-            Tabla con los planes asignados, sus clientes, estado,
-            nivel y enlaces para consultar cada detalle.
-        </p>
-
-        <div
-            class="tabla-scroll"
-            tabindex="0"
-            aria-label="Tabla desplazable de planes"
-            aria-describedby="descripcion-tabla"
-        >
-            <table>
-
-                <caption>
-                    Listado de rutinas de ejercicios y nutrición asignadas
-                </caption>
-
-                <thead>
-                    <tr>
-                        <th scope="col">N.º ID</th>
-                        <th scope="col">Rutina / Plan</th>
-                        <th scope="col">Cliente</th>
-                        <th scope="col">Estado</th>
-                        <th scope="col">Nivel</th>
-                        <th scope="col">Acción</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    <tr>
-                        <th scope="row">301</th>
-
-                        <td>
-                            Rutina de hipertrofia y dieta alta en proteína
-                        </td>
-
-                        <td>
-                            Mateo Vera
-                        </td>
-
-                        <td>
-                            <span
-                                class="status status-progress"
-                                aria-label="Estado: En progreso"
-                            >
-                                En progreso
-                            </span>
-                        </td>
-
-                        <td>
-                            Intermedio
-                        </td>
-
-                        <td>
-                            <a
-                                class="table-link"
-                                href="#ver-301"
-                                aria-label="Ver detalle del plan 301 de Mateo Vera"
-                            >
-                                Ver detalle
-                            </a>
-                        </td>
-                    </tr>
-
-
-                    <tr>
-                        <th scope="row">302</th>
-
-                        <td>
-                            Plan de cardio y déficit calórico
-                        </td>
-
-                        <td>
-                            Lucía Pérez
-                        </td>
-
-                        <td>
-                            <span
-                                class="status status-pending"
-                                aria-label="Estado: Pendiente"
-                            >
-                                Pendiente
-                            </span>
-                        </td>
-
-                        <td>
-                            Principiante
-                        </td>
-
-                        <td>
-                            <a
-                                class="table-link"
-                                href="#ver-302"
-                                aria-label="Ver detalle del plan 302 de Lucía Pérez"
-                            >
-                                Ver detalle
-                            </a>
-                        </td>
-                    </tr>
-
-
-                    <tr>
-                        <th scope="row">303</th>
-
-                        <td>
-                            Entrenamiento de fuerza y nutrición limpia
-                        </td>
-
-                        <td>
-                            Juan Morales
-                        </td>
-
-                        <td>
-                            <span
-                                class="status status-success"
-                                aria-label="Estado: Completado"
-                            >
-                                Completado
-                            </span>
-                        </td>
-
-                        <td>
-                            Avanzado
-                        </td>
-
-                        <td>
-                            <a
-                                class="table-link"
-                                href="#ver-303"
-                                aria-label="Ver detalle del plan 303 de Juan Morales"
-                            >
-                                Ver detalle
-                            </a>
-                        </td>
-                    </tr>
-
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-
-    <section
-        id="nuevo"
-        aria-labelledby="titulo-nuevo-plan"
-    >
-        <h2 id="titulo-nuevo-plan" class="sr-only">
-            Crear nuevo plan
-        </h2>
-
-        <Formulario />
-    </section>
-
+  </div>
 </main>
 
-
-<footer class="site-footer">
-    <p>
-        Bienestar Humano y Gym Pro -
-        Última sincronización:
-        <time datetime="2026-09-18T15:20">
-            hoy, 15:20
-        </time>
-    </p>
-</footer>
-
+<style>
+  .contenedor {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+  }
+  .listado, .detalle {
+    flex: 1;
+  }
+</style>
