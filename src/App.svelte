@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { supabase } from './lib/supabase';
-  import type { Suscripcion, Pago, Asistencia } from './tipos';
+  import type { Suscripcion, Pago, Asistencia, Usuario, Plan } from './tipos';
 
   let suscripciones: Suscripcion[] = [];
   let suscripcionSeleccionada: Suscripcion | null = null;
+  let usuarioAsociado: Usuario | null = null;
+  let planAsociado: Plan | null = null;
   let pagos: Pago[] = [];
   let asistencias: Asistencia[] = [];
   let errorRed = '';
@@ -16,28 +18,44 @@
       errorRed = 'Sin red o error al cargar datos';
     } else {
       suscripciones = data as Suscripcion[];
-      // Seleccionar automáticamente la primera suscripción si existe
       if (suscripciones.length > 0) {
         verDetalle(suscripciones[0]);
       }
     }
   });
 
-  // Cargar los datos relacionados para el detalle
+  // Cargar los datos relacionados completos para el detalle
   async function verDetalle(suscripcion: Suscripcion) {
     suscripcionSeleccionada = suscripcion;
     
-    // Peticiones a las tablas relacionadas
+    // 1. Obtener el usuario vinculado
+    const { data: dataUsuario } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', suscripcion.usuario_id)
+      .single();
+
+    // 2. Obtener el plan vinculado
+    const { data: dataPlan } = await supabase
+      .from('planes')
+      .select('*')
+      .eq('id', suscripcion.plan_id)
+      .single();
+    
+    // 3. Obtener pagos
     const { data: dataPagos } = await supabase
       .from('pagos')
       .select('*')
       .eq('suscripcion_id', suscripcion.id);
       
+    // 4. Obtener asistencias
     const { data: dataAsistencias } = await supabase
       .from('asistencias')
       .select('*')
       .eq('suscripcion_id', suscripcion.id);
 
+    usuarioAsociado = (dataUsuario as Usuario) || null;
+    planAsociado = (dataPlan as Plan) || null;
     pagos = (dataPagos as Pago[]) || [];
     asistencias = (dataAsistencias as Asistencia[]) || [];
   }
@@ -60,7 +78,7 @@
           <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
           <li on:click={() => verDetalle(s)} style="cursor: pointer; margin-bottom: 10px; border: 1px solid #ccc; padding: 10px;">
             <strong>Suscripción #{s.id}</strong> <br>
-            Estado: {s.estado}
+            Estado: <span style="color: {s.estado === 'Activa' ? '#2ecc71' : s.estado === 'Pendiente' ? '#f39c12' : '#e74c3c'}; font-weight: bold;">{s.estado}</span>
           </li>
         {:else}
           <p>Cargando suscripciones o sin registros...</p>
@@ -72,13 +90,33 @@
     <section class="detalle">
       {#if suscripcionSeleccionada}
         <h2>Detalle Suscripción #{suscripcionSeleccionada.id}</h2>
-        <p><strong>Estado:</strong> {suscripcionSeleccionada.estado}</p>
+        
+        {#if usuarioAsociado}
+          <p><strong>Cliente:</strong> {usuarioAsociado.nombre} ({usuarioAsociado.rol})</p>
+        {/if}
+
+        {#if planAsociado}
+          <p><strong>Plan Contratado:</strong> ${planAsociado.precio} ({planAsociado.dias} días)</p>
+        {/if}
+
+        <p>
+          <strong>Estado:</strong> 
+          <span style="color: {suscripcionSeleccionada.estado === 'Activa' ? '#2ecc71' : suscripcionSeleccionada.estado === 'Pendiente' ? '#f39c12' : '#e74c3c'}; font-weight: bold;">
+            {suscripcionSeleccionada.estado}
+          </span>
+        </p>
+        
         <p><strong>Vence el:</strong> {suscripcionSeleccionada.fin}</p>
 
         <h3>Pagos Relacionados</h3>
         <ul>
           {#each pagos as p}
-            <li>Monto: ${p.monto}</li>
+            <li>
+              Monto: ${p.monto} <br>
+              {#if p.foto_url}
+                <small>Comprobante: {p.foto_url}</small>
+              {/if}
+            </li>
           {:else}
             <li>No hay pagos registrados.</li>
           {/each}
