@@ -1,51 +1,92 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { supabase } from './lib/supabase';
 
   let rutina = '';
   let clienteNombre = '';
+  let planesDisponibles: any[] = [];
+  let planSeleccionadoId: number = 1;
   let estadoSeleccionado = 'Pendiente';
-  let nivelSeleccionado = 'Intermedio';
   let mensaje = '';
   let errorMsg = '';
 
-  async function registrarSuscripcion(event: Event) {
+  onMount(async () => {
+    const { data, error } = await supabase.from('planes').select('*');
+    if (!error && data) {
+      planesDisponibles = data;
+      if (data.length > 0) {
+        planSeleccionadoId = data[0].id;
+      }
+    }
+  });
+
+  async function registrarSuscripcionCompleta(event: Event) {
     event.preventDefault();
     mensaje = '';
     errorMsg = '';
 
     try {
-      // 1. Primero insertamos o buscamos al usuario ingresado en el formulario
+      // 1. Crear el usuario en la tabla 'usuarios'
       const { data: usuarioData, error: userError } = await supabase
         .from('usuarios')
         .insert([{ nombre: clienteNombre, rol: 'cliente' }])
         .select()
         .single();
 
-      if (userError) {
-        throw new Error('Error al registrar el usuario: ' + userError.message);
-      }
+      if (userError) throw new Error('Error al registrar usuario: ' + userError.message);
 
-      // 2. Insertamos la suscripción vinculada a ese nuevo usuario
-      const { error: suscripcionError } = await supabase
+      const planElegido = planesDisponibles.find(p => p.id === Number(planSeleccionadoId));
+      const diasPlan = planElegido ? planElegido.dias : 30;
+      const precioPlan = planElegido ? planElegido.precio : 29.99;
+
+      const fechaFin = new Date(Date.now() + diasPlan * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      // 2. Crear la suscripción vinculada al usuario y plan
+      const { data: suscripcionData, error: suscripcionError } = await supabase
         .from('suscripciones')
         .insert([
           {
             usuario_id: usuarioData.id,
-            plan_id: 1, // Plan por defecto (puedes ajustarlo si prefieres otro)
+            plan_id: Number(planSeleccionadoId),
             estado: estadoSeleccionado,
-            fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            fin: fechaFin
+          }
+        ])
+        .select()
+        .single();
+
+      if (suscripcionError) throw new Error('Error al registrar suscripción: ' + suscripcionError.message);
+
+      // 3. Registrar automáticamente el pago asociado
+      const { error: pagoError } = await supabase
+        .from('pagos')
+        .insert([
+          {
+            suscripcion_id: suscripcionData.id,
+            monto: precioPlan,
+            foto_url: rutina ? `${rutina.toLowerCase().replace(/\s+/g, '_')}.jpg` : 'comprobante_registro.jpg'
           }
         ]);
 
-      if (suscripcionError) {
-        throw new Error('Error al registrar la suscripción: ' + suscripcionError.message);
-      }
+      if (pagoError) throw new Error('Error al registrar el pago inicial: ' + pagoError.message);
 
-      mensaje = '¡Suscripción y cliente registrados con éxito!';
+      // 4. Registrar automáticamente la asistencia inicial
+      const { error: asistenciaError } = await supabase
+        .from('asistencias')
+        .insert([
+          {
+            suscripcion_id: suscripcionData.id,
+            ingreso: new Date().toISOString(),
+            nota: rutina ? `Registro inicial: ${rutina}` : 'Apertura de membresía'
+          }
+        ]);
+
+      if (asistenciaError) throw new Error('Error al registrar la asistencia inicial: ' + asistenciaError.message);
+
+      mensaje = '¡Suscripción, pago y asistencia registrados con éxito!';
       rutina = '';
       clienteNombre = '';
-      
-      // Recargar la página para ver el cambio reflejado en el listado
+
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -66,7 +107,7 @@
         <p style="color: #e74c3c; font-weight: bold; margin-bottom: 1rem;">{errorMsg}</p>
     {/if}
 
-    <form on:submit={registrarSuscripcion} class="main-form">
+    <form on:submit={registrarSuscripcionCompleta} class="main-form">
         <div class="form-group">
             <label for="rutina">
                 Rutina / Plan <span aria-hidden="true">*</span>
@@ -77,8 +118,9 @@
                 bind:value={rutina}
                 required
                 autocomplete="off"
-                placeholder="Ej. Pecho, Pierna..."
+                placeholder="Ej. Rutina de Piernas"
             />
+            <p class="field-help">Campo obligatorio.</p>
         </div>
 
         <div class="form-group">
@@ -91,8 +133,19 @@
                 bind:value={clienteNombre}
                 required
                 autocomplete="name"
-                placeholder="Ej. Juanito"
+                placeholder="Ej. Neyser"
             />
+        </div>
+
+        <div class="form-group">
+            <label for="plan">Seleccionar Plan</label>
+            <select id="plan" bind:value={planSeleccionadoId}>
+                {#each planesDisponibles as plan}
+                    <option value={plan.id}>Plan #{plan.id} - ${plan.precio} ({plan.dias} días)</option>
+                {:else}
+                    <option value="1">Cargando planes...</option>
+                {/each}
+            </select>
         </div>
 
         <div class="form-group">
@@ -101,15 +154,6 @@
                 <option value="Pendiente">Pendiente</option>
                 <option value="Activa">Activa</option>
                 <option value="Vencida">Vencida</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="nivel">Nivel</label>
-            <select id="nivel" bind:value={nivelSeleccionado}>
-                <option value="Principiante">Principiante</option>
-                <option value="Intermedio">Intermedio</option>
-                <option value="Avanzado">Avanzado</option>
             </select>
         </div>
 
@@ -125,6 +169,7 @@
     padding: 1.5rem;
     border-radius: 8px;
     color: #fff;
+    margin-bottom: 1rem;
   }
   .form-group {
     margin-bottom: 1rem;
@@ -141,6 +186,11 @@
     border: 1px solid #444;
     color: #fff;
     border-radius: 4px;
+  }
+  .field-help {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-top: 0.25rem;
   }
   .btn-submit {
     background-color: #8b5cf6;
