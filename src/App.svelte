@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { supabase } from './lib/supabase';
   import type { Suscripcion, Pago, Asistencia, Usuario, Plan } from './tipos';
+  import Formulario from './Formulario.svelte';
 
   let suscripciones: Suscripcion[] = [];
   let suscripcionSeleccionada: Suscripcion | null = null;
@@ -67,6 +68,11 @@
   {#if errorRed}
     <p style="color: red; font-weight: bold;">{errorRed}</p>
   {/if}
+
+  <!-- SECCIÓN DEL FORMULARIO UNIFICADO -->
+  <section class="seccion-formulario">
+    <Formulario />
+  </section>
 
   <div class="contenedor">
     <!-- VISTA LISTADO -->
@@ -138,10 +144,17 @@
 </main>
 
 <style>
+  .seccion-formulario {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: #1a1a1a;
+  }
   .contenedor {
     display: flex;
     gap: 2rem;
-    padding: 1rem;
+    padding: 1rem 0;
   }
   .listado, .detalle {
     flex: 1;
