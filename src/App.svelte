@@ -10,55 +10,141 @@
   let planAsociado: Plan | null = null;
   let pagos: Pago[] = [];
   let asistencias: Asistencia[] = [];
+  
   let errorRed = '';
+  let mensajeAviso = ''; 
 
-  // Cargar el listado al iniciar la vista desde Supabase
+  // FASE 3: Variables para el filtro
+  let filtroEstado = 'Todos';
+  const CLAVE_FILTRO = 'gym.filtro';
+
+  // Reactividad: Filtra la lista automáticamente cuando cambia el filtro o los datos
+  $: suscripcionesFiltradas = filtroEstado === 'Todos' 
+    ? suscripciones 
+    : suscripciones.filter(s => s.estado === filtroEstado);
+
   onMount(async () => {
+    // Verificamos sesión (Fase 2)
+    const { data: { session }, error: errorSesion } = await supabase.auth.getSession();
+    
+    if (errorSesion || !session) {
+      errorRed = 'Su sesión venció o no hay sesión. Inicie sesión otra vez.';
+      await supabase.auth.signOut();
+      return; 
+    }
+
+    // FASE 3: Recuperar el filtro guardado al recargar
+    const filtroGuardado = localStorage.getItem(CLAVE_FILTRO);
+    if (filtroGuardado && ['Todos', 'Activa', 'Pendiente', 'Vencida'].includes(filtroGuardado)) {
+      filtroEstado = filtroGuardado;
+    }
+
+    await cargarListado();
+  });
+
+  // FASE 3: Función para guardar el filtro cuando el usuario lo cambie
+  function manejarCambioFiltro(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    filtroEstado = select.value;
+    localStorage.setItem(CLAVE_FILTRO, filtroEstado);
+  }
+
+  // Extraemos la carga de datos a una función para poder reutilizarla
+  async function cargarListado() {
     const { data, error } = await supabase.from('suscripciones').select('*');
     if (error) {
-      errorRed = 'Sin red o error al cargar datos';
+      if (error.code === '401' || error.message.includes('JWT')) {
+        errorRed = 'Su sesión venció. Inicie sesión otra vez.';
+        await supabase.auth.signOut();
+      } else {
+        errorRed = 'Sin red o error al cargar datos';
+      }
     } else {
       suscripciones = data as Suscripcion[];
-      if (suscripciones.length > 0) {
+      if (suscripciones.length > 0 && !suscripcionSeleccionada) {
         verDetalle(suscripciones[0]);
       }
     }
-  });
+  }
 
-  // Cargar los datos relacionados completos para el detalle
   async function verDetalle(suscripcion: Suscripcion) {
     suscripcionSeleccionada = suscripcion;
     
-    // 1. Obtener el usuario vinculado
-    const { data: dataUsuario } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', suscripcion.usuario_id)
-      .single();
-
-    // 2. Obtener el plan vinculado
-    const { data: dataPlan } = await supabase
-      .from('planes')
-      .select('*')
-      .eq('id', suscripcion.plan_id)
-      .single();
-    
-    // 3. Obtener pagos
-    const { data: dataPagos } = await supabase
-      .from('pagos')
-      .select('*')
-      .eq('suscripcion_id', suscripcion.id);
-      
-    // 4. Obtener asistencias
-    const { data: dataAsistencias } = await supabase
-      .from('asistencias')
-      .select('*')
-      .eq('suscripcion_id', suscripcion.id);
+    const { data: dataUsuario } = await supabase.from('usuarios').select('*').eq('id', suscripcion.usuario_id).single();
+    const { data: dataPlan } = await supabase.from('planes').select('*').eq('id', suscripcion.plan_id).single();
+    const { data: dataPagos } = await supabase.from('pagos').select('*').eq('suscripcion_id', suscripcion.id);
+    const { data: dataAsistencias } = await supabase.from('asistencias').select('*').eq('suscripcion_id', suscripcion.id);
 
     usuarioAsociado = (dataUsuario as Usuario) || null;
     planAsociado = (dataPlan as Plan) || null;
     pagos = (dataPagos as Pago[]) || [];
     asistencias = (dataAsistencias as Asistencia[]) || [];
+  }
+  
+  // FASE 1 y FASE 5 (Reto de Copia Vieja)
+  async function cambiarEstadoSuscripcion(id: number, nuevoEstado: string) {
+    mensajeAviso = `Guardando estado ${nuevoEstado}...`;
+    
+    const suscripcion = suscripciones.find((s) => s.id === id);
+    if (!suscripcion) return;
+
+    if (suscripcion.estado === nuevoEstado) {
+       mensajeAviso = `La suscripción ya está en estado ${nuevoEstado}.`;
+       return;
+    }
+
+    try {
+      // FASE 5: Se añade "&estado=eq." + suscripcion.estado para asegurar que nadie más lo haya cambiado
+      const url = `https://aqiwzhspancaxhvxlkuj.supabase.co/rest/v1/suscripciones?id=eq.${id}&estado=eq.${suscripcion.estado}`;
+      
+      const respuesta = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "apikey": "sb_publishable_6EcKknEhJsI9YB3beA1Xxw_WxK1Ec90",
+          "Content-Type": "application/json",
+          "Prefer": "return representation"
+        },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      });
+
+      if (!respuesta.ok) {
+        mensajeAviso = `Error: la suscripción no cambió (respondió ${respuesta.status}).`;
+        return;
+      }
+
+      const filas = await respuesta.json();
+
+      // FASE 5: Si vuelve vacío, o no hay permisos, o el estado ya había sido cambiado por otro usuario
+      if (filas.length === 0) {
+        mensajeAviso = "No se pudo cambiar. Es posible que otro usuario ya haya modificado esta suscripción. Actualizando listado...";
+        // Actualizamos la pantalla para reflejar el cambio del otro usuario
+        await cargarListado(); 
+        
+        // Actualizamos el detalle actual
+        const actualizada = suscripciones.find((s) => s.id === id);
+        if (actualizada && suscripcionSeleccionada?.id === id) {
+           suscripcionSeleccionada = { ...actualizada };
+        }
+        return;
+      }
+
+      // Éxito: actualizamos la copia visual
+      const indice = suscripciones.findIndex((s) => s.id === id);
+      if (indice !== -1) {
+        suscripciones[indice].estado = filas[0].estado;
+        suscripciones = [...suscripciones]; 
+        
+        if (suscripcionSeleccionada?.id === id) {
+           suscripcionSeleccionada = { ...suscripcionSeleccionada, estado: filas[0].estado };
+        }
+      }
+      
+      mensajeAviso = `Suscripción #${id} pasó a "${nuevoEstado}".`;
+
+    } catch (error) {
+      console.error(error);
+      mensajeAviso = "Error: no hubo respuesta. La suscripción no cambió.";
+    }
   }
 </script>
 
@@ -66,10 +152,9 @@
   <h1>GYM & WELLNESS PRO</h1>
 
   {#if errorRed}
-    <p style="color: red; font-weight: bold;">{errorRed}</p>
+    <p style="color: red; font-weight: bold; padding: 10px; background: #ffe6e6; border-radius: 5px;">{errorRed}</p>
   {/if}
 
-  <!-- SECCIÓN DEL FORMULARIO UNIFICADO -->
   <section class="seccion-formulario">
     <Formulario />
   </section>
@@ -77,17 +162,33 @@
   <div class="contenedor">
     <!-- VISTA LISTADO -->
     <section class="listado">
-      <h2>Listado de Suscripciones</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Listado de Suscripciones</h2>
+        
+        <!-- FASE 3: Selector de filtro -->
+        <div>
+          <label for="filtro-estado">Filtrar: </label>
+          <select id="filtro-estado" bind:value={filtroEstado} on:change={manejarCambioFiltro} style="padding: 5px;">
+            <option value="Todos">Todos</option>
+            <option value="Activa">Activa</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Vencida">Vencida</option>
+          </select>
+        </div>
+      </div>
+      
       <ul>
-        {#each suscripciones as s}
+        {#each suscripcionesFiltradas as s}
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-          <li on:click={() => verDetalle(s)} style="cursor: pointer; margin-bottom: 10px; border: 1px solid #ccc; padding: 10px;">
+          <li on:click={() => verDetalle(s)} style="cursor: pointer; margin-bottom: 10px; border: 1px solid #ccc; padding: 10px; {suscripcionSeleccionada?.id === s.id ? 'border-color: #8b5cf6; background: #2a2a2a;' : ''}">
             <strong>Suscripción #{s.id}</strong> <br>
             Estado: <span style="color: {s.estado === 'Activa' ? '#2ecc71' : s.estado === 'Pendiente' ? '#f39c12' : '#e74c3c'}; font-weight: bold;">{s.estado}</span>
           </li>
         {:else}
-          <p>Cargando suscripciones o sin registros...</p>
+          <p style="color: #aaa; margin-top: 10px;">
+            {suscripciones.length === 0 ? 'Cargando suscripciones o sin registros...' : 'Ninguna suscripción coincide con el filtro.'}
+          </p>
         {/each}
       </ul>
     </section>
@@ -111,6 +212,25 @@
             {suscripcionSeleccionada.estado}
           </span>
         </p>
+
+        <!-- FASE 1: Botones y avisos -->
+        {#if mensajeAviso}
+          <p role="status" style="background: #333; color: white; padding: 8px; border-left: 4px solid #f39c12; margin: 10px 0;">
+            {mensajeAviso}
+          </p>
+        {/if}
+
+        <div style="margin: 15px 0; display: flex; gap: 10px;">
+          {#if suscripcionSeleccionada.estado !== 'Activa'}
+            <button on:click={() => cambiarEstadoSuscripcion(suscripcionSeleccionada.id, 'Activa')}>Pasar a Activa</button>
+          {/if}
+          {#if suscripcionSeleccionada.estado !== 'Pendiente'}
+            <button on:click={() => cambiarEstadoSuscripcion(suscripcionSeleccionada.id, 'Pendiente')}>Pasar a Pendiente</button>
+          {/if}
+          {#if suscripcionSeleccionada.estado !== 'Vencida'}
+            <button on:click={() => cambiarEstadoSuscripcion(suscripcionSeleccionada.id, 'Vencida')}>Pasar a Vencida</button>
+          {/if}
+        </div>
         
         <p><strong>Vence el:</strong> {suscripcionSeleccionada.fin}</p>
 
@@ -158,5 +278,17 @@
   }
   .listado, .detalle {
     flex: 1;
+  }
+  button {
+    padding: 8px 12px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+  }
+  button:hover {
+    background-color: #45a049;
   }
 </style>
